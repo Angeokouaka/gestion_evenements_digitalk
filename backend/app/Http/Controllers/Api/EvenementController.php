@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Evenement;
 use App\Http\Resources\EvenementResource;
+use App\Services\EvenementService;
 use Illuminate\Http\Request;
 use App\Models\Intervenant;
 
@@ -12,15 +13,13 @@ class EvenementController extends Controller
 {
     const FILIERES = ['ESITEC', 'IST', 'PGE', 'IMAP', 'MERCURE', 'ECONOMIE', 'BBA', 'LEA', 'SCHOOL OF LAW'];
 
+    public function __construct(
+        protected EvenementService $service
+    ) {}
+
     public function index(Request $request)
     {
-        $query = Evenement::with(['categorie', 'organisateur']);
-
-        if ($request->filled('filiere')) {
-            $query->where('filiere', $request->filiere);
-        }
-
-        $evenements = $query->paginate(9);
+        $evenements = $this->service->lister($request->filled('filiere') ? $request->filiere : null);
 
         return EvenementResource::collection($evenements);
     }
@@ -41,10 +40,7 @@ class EvenementController extends Controller
             'organisateur_id' => 'required|exists:organisateurs,id',
         ]);
 
-        $validated['statut'] = $validated['statut'] ?? 'planifie';
-
-        $evenement = Evenement::create($validated);
-        $evenement->load(['categorie', 'organisateur']);
+        $evenement = $this->service->creer($validated);
 
         return (new EvenementResource($evenement))
             ->response()
@@ -53,16 +49,12 @@ class EvenementController extends Controller
 
     public function show(Evenement $evenement)
     {
-        $evenement->load(['categorie', 'organisateur', 'intervenants', 'participants']);
+        $evenement = $this->service->afficher($evenement);
         return new EvenementResource($evenement);
     }
 
     public function update(Request $request, Evenement $evenement)
     {
-        if ($request->user()->id !== $evenement->organisateur_id) {
-            return response()->json(['message' => 'Non autorise a modifier cet evenement.'], 403);
-        }
-
         $validated = $request->validate([
             'titre' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
@@ -77,19 +69,14 @@ class EvenementController extends Controller
             'organisateur_id' => 'sometimes|required|exists:organisateurs,id',
         ]);
 
-        $evenement->update($validated);
-        $evenement->load(['categorie', 'organisateur']);
+        $evenement = $this->service->modifier($request->user()->id, $evenement, $validated);
 
         return new EvenementResource($evenement);
     }
 
     public function destroy(Request $request, Evenement $evenement)
     {
-        if ($request->user()->id !== $evenement->organisateur_id) {
-            return response()->json(['message' => 'Non autorise a supprimer cet evenement.'], 403);
-        }
-
-        $evenement->delete();
+        $this->service->supprimer($request->user()->id, $evenement);
         return response()->json(null, 204);
     }
 
@@ -99,15 +86,15 @@ class EvenementController extends Controller
             'intervenant_id' => 'required|exists:intervenants,id',
         ]);
 
-        $evenement->intervenants()->syncWithoutDetaching($validated['intervenant_id']);
+        $evenement = $this->service->ajouterIntervenant($evenement, $validated['intervenant_id']);
 
-        return response()->json($evenement->load('intervenants'));
+        return response()->json($evenement);
     }
 
     public function detachIntervenant(Evenement $evenement, Intervenant $intervenant)
     {
-        $evenement->intervenants()->detach($intervenant->id);
+        $evenement = $this->service->retirerIntervenant($evenement, $intervenant->id);
 
-        return response()->json($evenement->load('intervenants'));
+        return response()->json($evenement);
     }
 }
