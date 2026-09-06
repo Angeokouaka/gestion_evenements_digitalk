@@ -1,0 +1,234 @@
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
+import api from '../services/api'
+import { useAuthStore } from '../stores/auth'
+
+const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
+
+const evenement = ref(null)
+const loading = ref(true)
+const error = ref(null)
+const suppressionLoading = ref(false)
+
+const nom = ref('')
+const prenom = ref('')
+const email = ref('')
+const telephone = ref('')
+const matricule = ref('')
+const telephoneError = ref(null)
+const matriculeError = ref(null)
+const inscriptionMessage = ref(null)
+const inscriptionError = ref(null)
+const inscriptionLoading = ref(false)
+
+const estProprietaire = computed(() => {
+  return authStore.isAuthenticated &&
+    evenement.value &&
+    authStore.organisateur?.id === evenement.value.organisateur?.id
+})
+
+async function chargerEvenement() {
+  loading.value = true
+  try {
+    const response = await api.get(`/evenements/${route.params.id}`)
+    evenement.value = response.data.data
+  } catch (err) {
+    error.value = "Evenement introuvable."
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(chargerEvenement)
+
+async function handleSupprimer() {
+  if (!confirm(`Supprimer definitivement "${evenement.value.titre}" ? Cette action est irreversible.`)) {
+    return
+  }
+
+  suppressionLoading.value = true
+  try {
+    await api.delete(`/evenements/${evenement.value.id}`)
+    router.push('/evenements')
+  } catch (err) {
+    error.value = "Erreur lors de la suppression."
+    console.error(err)
+  } finally {
+    suppressionLoading.value = false
+  }
+}
+
+function validerTelephone() {
+  if (telephone.value && !/^\d{1,9}$/.test(telephone.value)) {
+    telephoneError.value = 'Le telephone doit contenir au maximum 9 chiffres.'
+    return false
+  }
+  telephoneError.value = null
+  return true
+}
+
+function validerMatricule() {
+  if (matricule.value && matricule.value.length > 9) {
+    matriculeError.value = 'Le matricule doit contenir au maximum 9 caracteres.'
+    return false
+  }
+  matriculeError.value = null
+  return true
+}
+
+async function handleInscription() {
+  inscriptionError.value = null
+  inscriptionMessage.value = null
+
+  const telephoneOk = validerTelephone()
+  const matriculeOk = validerMatricule()
+  if (!telephoneOk || !matriculeOk) {
+    return
+  }
+
+  inscriptionLoading.value = true
+
+  try {
+    const participantResponse = await api.post('/participants', {
+      nom: nom.value,
+      prenom: prenom.value,
+      email: email.value,
+      telephone: telephone.value || null,
+      matricule: matricule.value || null,
+    })
+
+    await api.post('/inscriptions', {
+      participant_id: participantResponse.data.data.id,
+      evenement_id: evenement.value.id,
+    })
+
+    inscriptionMessage.value = "Inscription reussie ! Vous recevrez les details par email."
+    nom.value = ''
+    prenom.value = ''
+    email.value = ''
+    telephone.value = ''
+    matricule.value = ''
+  } catch (err) {
+    if (err.response?.status === 422) {
+      const erreurs = err.response.data.errors
+      if (erreurs?.email) {
+        inscriptionError.value = "Cet email est deja enregistre. Utilisez un autre email ou contactez l'organisateur."
+      } else if (erreurs?.matricule) {
+        inscriptionError.value = "Ce matricule est deja enregistre."
+      } else {
+        inscriptionError.value = "Erreur de validation. Verifiez vos informations."
+      }
+    } else {
+      inscriptionError.value = "Erreur lors de l'inscription. Verifiez vos informations."
+    }
+    console.error(err.response?.data || err)
+  } finally {
+    inscriptionLoading.value = false
+  }
+}
+</script>
+
+<template>
+  <div class="max-w-3xl mx-auto mt-10 p-6">
+    <p v-if="loading" class="text-gray-500">Chargement...</p>
+    <p v-else-if="error" class="text-red-600">{{ error }}</p>
+
+    <div v-else-if="evenement">
+      <div class="border border-gray-200 rounded-lg p-6 mb-6">
+        <div class="flex items-start justify-between mb-2">
+          <span class="inline-block text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+            {{ evenement.categorie?.nom }}
+          </span>
+
+          <div v-if="estProprietaire" class="flex gap-2">
+            <RouterLink
+              :to="`/evenements/${evenement.id}/modifier`"
+              class="text-sm px-3 py-1 border border-blue-600 text-blue-600 rounded hover:bg-blue-50"
+            >
+              Modifier
+            </RouterLink>
+            <button
+              @click="handleSupprimer"
+              :disabled="suppressionLoading"
+              class="text-sm px-3 py-1 border border-red-600 text-red-600 rounded hover:bg-red-50 disabled:opacity-50"
+            >
+              {{ suppressionLoading ? 'Suppression...' : 'Supprimer' }}
+            </button>
+          </div>
+        </div>
+
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ evenement.titre }}</h1>
+        <p class="text-gray-600 mb-4">{{ evenement.description }}</p>
+
+        <div class="text-sm text-gray-500 space-y-1">
+          <p>Debut : {{ evenement.date_debut }}</p>
+          <p>Fin : {{ evenement.date_fin }}</p>
+          <p v-if="evenement.lieu">Lieu : {{ evenement.lieu }}</p>
+          <p v-if="evenement.lien_visio">
+            Lien : <a :href="evenement.lien_visio" target="_blank" class="text-blue-600 underline">{{ evenement.lien_visio }}</a>
+          </p>
+          <p v-if="evenement.capacite_max">Places disponibles : {{ evenement.capacite_max }}</p>
+          <p>Organise par : {{ evenement.organisateur?.nom }}</p>
+        </div>
+
+        <div v-if="evenement.intervenants?.length" class="mt-4 pt-4 border-t border-gray-100">
+          <p class="text-sm font-medium text-gray-700 mb-2">Intervenants</p>
+          <div class="flex flex-wrap gap-2">
+            <span
+              v-for="intervenant in evenement.intervenants"
+              :key="intervenant.id"
+              class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
+            >
+              {{ intervenant.prenom }} {{ intervenant.nom }}
+              <span v-if="intervenant.specialite" class="text-gray-400">- {{ intervenant.specialite }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="border border-gray-200 rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">S'inscrire a cet evenement</h2>
+
+        <p v-if="inscriptionMessage" class="text-green-700 bg-green-50 border border-green-200 rounded p-2 mb-4 text-sm">
+          {{ inscriptionMessage }}
+        </p>
+
+        <form @submit.prevent="handleInscription" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <input v-model="nom" type="text" placeholder="Nom *" required
+              class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input v-model="prenom" type="text" placeholder="Prenom *" required
+              class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <input v-model="email" type="email" placeholder="Email *" required
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <input v-model="telephone" @input="validerTelephone" type="tel" placeholder="Telephone" maxlength="9"
+                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2"
+                :class="telephoneError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'" />
+              <p v-if="telephoneError" class="text-red-600 text-xs mt-1">{{ telephoneError }}</p>
+            </div>
+            <div>
+              <input v-model="matricule" @input="validerMatricule" type="text" placeholder="Matricule (si etudiant)" maxlength="9"
+                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2"
+                :class="matriculeError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'" />
+              <p v-if="matriculeError" class="text-red-600 text-xs mt-1">{{ matriculeError }}</p>
+            </div>
+          </div>
+
+          <p v-if="inscriptionError" class="text-red-600 text-sm">{{ inscriptionError }}</p>
+
+          <button type="submit" :disabled="inscriptionLoading"
+            class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+            {{ inscriptionLoading ? 'Inscription...' : "S'inscrire" }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</template>
