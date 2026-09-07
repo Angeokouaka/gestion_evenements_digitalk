@@ -5,13 +5,18 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\InscriptionResource;
 use App\Models\Inscription;
+use App\Services\InscriptionService;
 use Illuminate\Http\Request;
 
 class InscriptionController extends Controller
 {
+    public function __construct(
+        protected InscriptionService $service
+    ) {}
+
     public function index()
     {
-        $inscriptions = Inscription::with(['participant', 'evenement'])->get();
+        $inscriptions = $this->service->lister();
         return InscriptionResource::collection($inscriptions);
     }
 
@@ -23,11 +28,7 @@ class InscriptionController extends Controller
             'statut' => 'nullable|in:en_attente,confirmee,annulee',
         ]);
 
-        $validated['statut'] = $validated['statut'] ?? 'en_attente';
-        $validated['date_inscription'] = now();
-
-        $inscription = Inscription::create($validated);
-        $inscription->load(['participant', 'evenement']);
+        $inscription = $this->service->creer($validated);
 
         return (new InscriptionResource($inscription))
             ->response()
@@ -36,7 +37,7 @@ class InscriptionController extends Controller
 
     public function show(Inscription $inscription)
     {
-        $inscription->load(['participant', 'evenement']);
+        $inscription = $this->service->afficher($inscription);
         return new InscriptionResource($inscription);
     }
 
@@ -46,15 +47,14 @@ class InscriptionController extends Controller
             'statut' => 'sometimes|required|in:en_attente,confirmee,annulee',
         ]);
 
-        $inscription->update($validated);
-        $inscription->load(['participant', 'evenement']);
+        $inscription = $this->service->modifier($inscription, $validated);
 
         return new InscriptionResource($inscription);
     }
 
     public function destroy(Inscription $inscription)
     {
-        $inscription->delete();
+        $this->service->supprimer($inscription);
         return response()->json(null, 204);
     }
 }
