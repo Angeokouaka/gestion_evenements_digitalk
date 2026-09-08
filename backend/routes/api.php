@@ -37,7 +37,10 @@ Route::get('evenements/{evenement}', [EvenementController::class, 'show']);
 Route::post('participants', [ParticipantController::class, 'store']);
 
 // Inscriptions : libres (un participant s'inscrit sans compte)
+// Inscriptions : libres (un participant s'inscrit sans compte)
 Route::apiResource('inscriptions', InscriptionController::class);
+Route::post('inscriptions/{inscription}/scanner-arrivee', [InscriptionController::class, 'scannerArrivee']);
+Route::post('inscriptions/{inscription}/scanner-depart', [InscriptionController::class, 'scannerDepart']);
 
 // Routes protegees (ecriture - necessite d'etre connecte en tant qu'Organisateur)
 Route::middleware('auth:sanctum')->group(function () {

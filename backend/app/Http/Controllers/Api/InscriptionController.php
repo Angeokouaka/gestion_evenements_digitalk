@@ -16,8 +16,7 @@ class InscriptionController extends Controller
 
     public function index()
     {
-        $inscriptions = $this->service->lister();
-        return InscriptionResource::collection($inscriptions);
+        return InscriptionResource::collection($this->service->lister());
     }
 
     public function store(Request $request)
@@ -37,8 +36,7 @@ class InscriptionController extends Controller
 
     public function show(Inscription $inscription)
     {
-        $inscription = $this->service->afficher($inscription);
-        return new InscriptionResource($inscription);
+        return new InscriptionResource($this->service->afficher($inscription));
     }
 
     public function update(Request $request, Inscription $inscription)
@@ -47,14 +45,24 @@ class InscriptionController extends Controller
             'statut' => 'sometimes|required|in:en_attente,confirmee,annulee',
         ]);
 
-        $inscription = $this->service->modifier($inscription, $validated);
-
-        return new InscriptionResource($inscription);
+        return new InscriptionResource($this->service->modifier($inscription, $validated));
     }
 
     public function destroy(Inscription $inscription)
     {
         $this->service->supprimer($inscription);
         return response()->json(null, 204);
+    }
+
+    public function scannerArrivee(Inscription $inscription)
+    {
+        $inscription = $this->service->confirmerPresenceArrivee($inscription);
+        return new InscriptionResource($inscription);
+    }
+
+    public function scannerDepart(Inscription $inscription)
+    {
+        $inscription = $this->service->confirmerPresenceDepart($inscription);
+        return new InscriptionResource($inscription);
     }
 }
