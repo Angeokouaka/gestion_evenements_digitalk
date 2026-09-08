@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '../services/api'
+import evenementService from '../services/evenementService'
+import categorieService from '../services/categorieService'
+import intervenantService from '../services/intervenantService'
 import { useAuthStore } from '../stores/auth'
 import PageHeader from '../components/PageHeader.vue'
 
@@ -40,7 +42,7 @@ const categorieSelectionnee = computed(() =>
 const estEnLigne = computed(() => categorieSelectionnee.value?.en_ligne === true)
 
 onMounted(async () => {
-  const response = await api.get('/categories')
+   const response = await categorieService.liste()
   categories.value = response.data.data
 
   const draft = localStorage.getItem(DRAFT_KEY)
@@ -151,7 +153,7 @@ async function handlePublier() {
   loading.value = true
 
   try {
-    const response = await api.post('/evenements', {
+         const response = await evenementService.creer({
       titre: titre.value,
       description: description.value,
       date_debut: `${dateDebut.value}T${heureDebut.value}`,
@@ -167,15 +169,13 @@ async function handlePublier() {
     const nouvelEvenementId = response.data.data.id
 
     for (const intervenant of intervenantsValides) {
-      const intervenantResponse = await api.post('/intervenants', {
+           const intervenantResponse = await intervenantService.creer({
         nom: intervenant.nom,
         prenom: intervenant.prenom,
         specialite: intervenant.poste,
       })
 
-      await api.post(`/evenements/${nouvelEvenementId}/intervenants`, {
-        intervenant_id: intervenantResponse.data.data.id,
-      })
+            await evenementService.ajouterIntervenant(nouvelEvenementId, intervenantResponse.data.data.id)
     }
 
     localStorage.removeItem(DRAFT_KEY)

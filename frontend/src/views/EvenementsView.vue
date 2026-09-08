@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
-import api from '../services/api'
+import evenementService from '../services/evenementService'
 import PageHeader from '../components/PageHeader.vue'
 
 const FILIERES = ['ESITEC', 'IST', 'PGE', 'IMAP', 'MERCURE', 'ECONOMIE', 'BBA', 'LEA', 'SCHOOL OF LAW']
@@ -81,7 +81,7 @@ async function chargerEvenements(page = 1) {
       params.filiere = filiereActive.value
     }
 
-    const response = await api.get('/evenements', { params })
+        const response = await evenementService.liste(params)
     evenements.value = response.data.data
     pageActuelle.value = response.data.meta.current_page
     dernierePage.value = response.data.meta.last_page

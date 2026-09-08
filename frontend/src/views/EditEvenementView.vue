@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import api from '../services/api'
+import evenementService from '../services/evenementService'
+import categorieService from '../services/categorieService'
+import intervenantService from '../services/intervenantService'
 import PageHeader from '../components/PageHeader.vue'
 
 const route = useRoute()
@@ -46,9 +48,9 @@ function separerDateHeure(datetimeStr) {
 
 onMounted(async () => {
   try {
-    const [categoriesRes, evenementRes] = await Promise.all([
-      api.get('/categories'),
-      api.get(`/evenements/${route.params.id}`),
+        const [categoriesRes, evenementRes] = await Promise.all([
+      categorieService.liste(),
+      evenementService.detail(route.params.id),
     ])
 
     categories.value = categoriesRes.data.data
@@ -120,7 +122,7 @@ async function retirerIntervenantExistant(intervenantId) {
   if (!confirm('Retirer cet intervenant de l\'evenement ?')) return
 
   try {
-    await api.delete(`/evenements/${route.params.id}/intervenants/${intervenantId}`)
+        await evenementService.retirerIntervenant(route.params.id, intervenantId)
     intervenantsExistants.value = intervenantsExistants.value.filter((i) => i.id !== intervenantId)
   } catch (err) {
     error.value = "Erreur lors du retrait de l'intervenant."
@@ -152,7 +154,7 @@ async function handleEnregistrer() {
   loading.value = true
 
   try {
-    await api.put(`/evenements/${route.params.id}`, {
+       await evenementService.modifier(route.params.id, {
       titre: titre.value,
       description: description.value,
       date_debut: `${dateDebut.value}T${heureDebut.value}`,
@@ -164,15 +166,13 @@ async function handleEnregistrer() {
     })
 
     for (const intervenant of intervenantsValides) {
-      const intervenantResponse = await api.post('/intervenants', {
+            const intervenantResponse = await intervenantService.creer( {
         nom: intervenant.nom,
         prenom: intervenant.prenom,
         specialite: intervenant.poste,
       })
 
-      await api.post(`/evenements/${route.params.id}/intervenants`, {
-        intervenant_id: intervenantResponse.data.data.id,
-      })
+            await evenementService.ajouterIntervenant(route.params.id, intervenantResponse.data.data.id)
     }
 
     router.push(`/evenements/${route.params.id}`)

@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
-import api from '../services/api'
+import evenementService from '../services/evenementService'
+import participantService from '../services/participantService'
+import inscriptionService from '../services/inscriptionService'
 import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
@@ -33,7 +35,7 @@ const estProprietaire = computed(() => {
 async function chargerEvenement() {
   loading.value = true
   try {
-    const response = await api.get(`/evenements/${route.params.id}`)
+        const response = await evenementService.detail(route.params.id)
     evenement.value = response.data.data
   } catch (err) {
     error.value = "Evenement introuvable."
@@ -52,7 +54,7 @@ async function handleSupprimer() {
 
   suppressionLoading.value = true
   try {
-    await api.delete(`/evenements/${evenement.value.id}`)
+        await evenementService.supprimer(evenement.value.id)
     router.push('/evenements')
   } catch (err) {
     error.value = "Erreur lors de la suppression."
@@ -93,7 +95,7 @@ async function handleInscription() {
   inscriptionLoading.value = true
 
   try {
-    const participantResponse = await api.post('/participants', {
+       const participantResponse = await participantService.creer( {
       nom: nom.value,
       prenom: prenom.value,
       email: email.value,
@@ -101,7 +103,7 @@ async function handleInscription() {
       matricule: matricule.value || null,
     })
 
-    await api.post('/inscriptions', {
+       await inscriptionService.creer({
       participant_id: participantResponse.data.data.id,
       evenement_id: evenement.value.id,
     })
