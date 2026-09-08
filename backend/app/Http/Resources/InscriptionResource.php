@@ -13,6 +13,11 @@ class InscriptionResource extends JsonResource
             'id' => $this->id,
             'statut' => $this->statut,
             'date_inscription' => $this->date_inscription,
+            'qr_code' => $this->qr_code,
+            'presence_arrivee' => $this->presence_arrivee,
+            'date_presence_arrivee' => $this->date_presence_arrivee,
+            'presence_depart' => $this->presence_depart,
+            'date_presence_depart' => $this->date_presence_depart,
             'participant' => new ParticipantResource($this->whenLoaded('participant')),
             'evenement' => new EvenementResource($this->whenLoaded('evenement')),
         ];

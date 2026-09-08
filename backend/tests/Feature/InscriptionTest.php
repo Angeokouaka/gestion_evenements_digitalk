@@ -85,5 +85,42 @@ class InscriptionTest extends TestCase
         ]);
 
         $response->assertStatus(422);
+
     }
+        public function test_un_participant_recoit_son_certificat_apres_double_scan(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $evenement = Evenement::factory()->create([
+            'date_debut' => now()->subMinutes(2),
+            'date_fin' => now()->subSeconds(10),
+        ]);
+
+        $participant = Participant::factory()->create();
+
+        $inscription = Inscription::factory()->create([
+            'participant_id' => $participant->id,
+            'evenement_id' => $evenement->id,
+        ]);
+
+        $this->postJson("/api/inscriptions/{$inscription->id}/scanner-arrivee")
+            ->assertStatus(200)
+            ->assertJsonPath('data.presence_arrivee', true);
+
+        $this->assertDatabaseMissing('certificats', [
+            'inscription_id' => $inscription->id,
+        ]);
+
+        $this->postJson("/api/inscriptions/{$inscription->id}/scanner-depart")
+            ->assertStatus(200)
+            ->assertJsonPath('data.presence_depart', true);
+
+        $this->assertDatabaseHas('certificats', [
+            'inscription_id' => $inscription->id,
+        ]);
+
+        $certificat = \App\Models\Certificat::where('inscription_id', $inscription->id)->first();
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($certificat->url_fichier);
+    }
+
 }
