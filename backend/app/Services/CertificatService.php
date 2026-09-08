@@ -57,8 +57,9 @@ class CertificatService
         return $cheminRelatif;
     }
 
-    protected function envoyerParMail(Inscription $inscription, Certificat $certificat): void
-    {
-        // À implémenter à l'étape suivante : Mail::to($inscription->participant->email)->send(new CertificatMail($certificat));
-    }
+   protected function envoyerParMail(Inscription $inscription, Certificat $certificat): void
+{
+    \Illuminate\Support\Facades\Mail::to($inscription->participant->email)
+        ->send(new \App\Mail\CertificatMail($certificat));
+}
 }
