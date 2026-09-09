@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Evenement extends Model
 {
@@ -12,12 +13,26 @@ class Evenement extends Model
     protected $fillable = [
         'titre', 'description', 'date_debut', 'date_fin',
         'lieu', 'lien_visio', 'filiere', 'capacite_max', 'statut', 'categorie_id', 'organisateur_id',
+        'qr_code', 'duree_fenetre_scan_debut', 'duree_fenetre_scan_fin',
+        'rappel_actif', 'delai_rappel_heures',
     ];
 
     protected $casts = [
         'date_debut' => 'datetime',
         'date_fin' => 'datetime',
+        'rappel_actif' => 'boolean',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function (Evenement $evenement) {
+            if (empty($evenement->qr_code)) {
+                $evenement->qr_code = (string) Str::uuid();
+            }
+        });
+    }
 
     public function categorie()
     {

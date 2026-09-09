@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Evenement;
 use App\Repositories\Interfaces\EvenementRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 
 class EvenementService
 {
@@ -25,9 +26,10 @@ class EvenementService
         );
     }
 
-    public function creer(array $data): Evenement
+        public function creer(array $data): Evenement
     {
         $data['statut'] = $data['statut'] ?? 'planifie';
+        $data['qr_code'] = (string) Str::uuid();
         return $this->repository->create($data);
     }
 

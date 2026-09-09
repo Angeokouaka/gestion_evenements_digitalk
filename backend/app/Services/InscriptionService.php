@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Inscription;
 use App\Repositories\Interfaces\InscriptionRepositoryInterface;
+use App\Repositories\Interfaces\EvenementRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -12,6 +13,7 @@ class InscriptionService
 {
     public function __construct(
         protected InscriptionRepositoryInterface $repository,
+        protected EvenementRepositoryInterface $evenementRepository,
         protected CertificatService $certificatService
     ) {}
 
@@ -41,6 +43,48 @@ class InscriptionService
     public function supprimer(Inscription $inscription): bool
     {
         return $this->repository->delete($inscription);
+    }
+
+    public function confirmerParEmail(string $qrCodeEvenement, string $email): Inscription
+    {
+        $evenement = $this->evenementRepository->findByQrCode($qrCodeEvenement);
+
+        if (!$evenement) {
+            abort(404, 'Evenement introuvable.');
+        }
+
+        $inscription = $this->repository->findByEmailAndEvenement($email, $evenement->id);
+
+        if (!$inscription) {
+            abort(404, "Aucune inscription trouvee pour cet email sur cet evenement.");
+        }
+
+        $debut = Carbon::parse($evenement->date_debut);
+        $finFenetreArrivee = $debut->copy()->addMinutes($evenement->duree_fenetre_scan_debut);
+
+        $fin = Carbon::parse($evenement->date_fin);
+        $finFenetreDepart = $fin->copy()->addMinutes($evenement->duree_fenetre_scan_fin);
+
+        $maintenant = now();
+
+        if ($maintenant->between($debut, $finFenetreArrivee)) {
+            if ($inscription->presence_arrivee) {
+                abort(422, "Presence d'arrivee deja confirmee.");
+            }
+            return $this->confirmerPresenceArrivee($inscription);
+        }
+
+        if ($maintenant->between($fin, $finFenetreDepart)) {
+            if (!$inscription->presence_arrivee) {
+                abort(422, "Vous devez d'abord confirmer votre arrivee.");
+            }
+            if ($inscription->presence_depart) {
+                abort(422, 'Presence de depart deja confirmee.');
+            }
+            return $this->confirmerPresenceDepart($inscription);
+        }
+
+        abort(422, 'Scan indisponible pour le moment.');
     }
 
     public function confirmerPresenceArrivee(Inscription $inscription): Inscription

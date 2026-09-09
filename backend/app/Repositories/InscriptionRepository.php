@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Inscription;
 use App\Repositories\Interfaces\InscriptionRepositoryInterface;
 use Illuminate\Support\Collection;
+use App\Models\Participant;
 
 class InscriptionRepository implements InscriptionRepositoryInterface
 {
@@ -37,4 +38,16 @@ class InscriptionRepository implements InscriptionRepositoryInterface
     {
         return $inscription->delete();
     }
+    public function findByEmailAndEvenement(string $email, int $evenementId): ?Inscription
+{
+    $participant = Participant::where('email', $email)->first();
+
+    if (!$participant) {
+        return null;
+    }
+
+    return Inscription::where('participant_id', $participant->id)
+        ->where('evenement_id', $evenementId)
+        ->first();
+}
 }

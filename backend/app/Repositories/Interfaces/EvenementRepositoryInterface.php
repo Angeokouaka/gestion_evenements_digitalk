@@ -20,4 +20,6 @@ interface EvenementRepositoryInterface
     public function attachIntervenant(Evenement $evenement, int $intervenantId): Evenement;
 
     public function detachIntervenant(Evenement $evenement, int $intervenantId): Evenement;
+    
+    public function findByQrCode(string $qrCode): ?Evenement;
 }

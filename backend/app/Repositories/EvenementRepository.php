@@ -55,4 +55,8 @@ class EvenementRepository implements EvenementRepositoryInterface
         $evenement->intervenants()->detach($intervenantId);
         return $evenement->load('intervenants');
     }
+    public function findByQrCode(string $qrCode): ?Evenement
+{
+    return Evenement::where('qr_code', $qrCode)->first();
+}
 }
