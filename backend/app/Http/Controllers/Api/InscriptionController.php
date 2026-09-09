@@ -65,4 +65,14 @@ class InscriptionController extends Controller
         $inscription = $this->service->confirmerPresenceDepart($inscription);
         return new InscriptionResource($inscription);
     }
+        public function scannerParEmail(Request $request, string $qrCode)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $inscription = $this->service->confirmerParEmail($qrCode, $validated['email']);
+
+        return new InscriptionResource($inscription);
+    }
 }
