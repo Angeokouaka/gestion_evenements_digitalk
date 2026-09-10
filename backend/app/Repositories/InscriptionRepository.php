@@ -50,4 +50,8 @@ class InscriptionRepository implements InscriptionRepositoryInterface
         ->where('evenement_id', $evenementId)
         ->first();
 }
+public function countByEvenement(int $evenementId): int
+{
+    return Inscription::where('evenement_id', $evenementId)->count();
+}
 }

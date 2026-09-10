@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Inscription;
+use App\Models\Evenement;
 use App\Repositories\Interfaces\InscriptionRepositoryInterface;
 use App\Repositories\Interfaces\EvenementRepositoryInterface;
 use Illuminate\Support\Collection;
@@ -14,7 +15,8 @@ class InscriptionService
     public function __construct(
         protected InscriptionRepositoryInterface $repository,
         protected EvenementRepositoryInterface $evenementRepository,
-        protected CertificatService $certificatService
+        protected CertificatService $certificatService,
+        protected ListeAttenteService $listeAttenteService
     ) {}
 
     public function lister(): Collection
@@ -27,8 +29,26 @@ class InscriptionService
         return $this->repository->findWithRelations($inscription, ['participant', 'evenement']);
     }
 
-    public function creer(array $data): Inscription
+    public function creer(array $data): Inscription|array
     {
+        $evenement = Evenement::findOrFail($data['evenement_id']);
+
+        if ($evenement->capacite_max) {
+            $nombreInscrits = $this->repository->countByEvenement($data['evenement_id']);
+
+            if ($nombreInscrits >= $evenement->capacite_max) {
+                $listeAttente = $this->listeAttenteService->ajouter(
+                    $data['evenement_id'],
+                    $data['participant_id']
+                );
+
+                return [
+                    'liste_attente' => true,
+                    'position' => $listeAttente->position,
+                ];
+            }
+        }
+
         $data['statut'] = $data['statut'] ?? 'en_attente';
         $data['date_inscription'] = now();
         $data['qr_code'] = Str::uuid();

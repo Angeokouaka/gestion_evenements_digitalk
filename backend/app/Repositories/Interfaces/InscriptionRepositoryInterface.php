@@ -16,7 +16,8 @@ interface InscriptionRepositoryInterface
     public function update(Inscription $inscription, array $data): Inscription;
 
     public function delete(Inscription $inscription): bool;
-    
+
     public function findByEmailAndEvenement(string $email, int $evenementId): ?Inscription;
+    public function countByEvenement(int $evenementId): int;
 
 }

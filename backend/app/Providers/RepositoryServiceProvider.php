@@ -9,6 +9,8 @@ use App\Repositories\Interfaces\InscriptionRepositoryInterface;
 use App\Repositories\InscriptionRepository;
 use App\Repositories\Interfaces\CertificatRepositoryInterface;
 use App\Repositories\CertificatRepository;
+use App\Repositories\Interfaces\ListeAttenteRepositoryInterface;
+use App\Repositories\ListeAttenteRepository;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -17,6 +19,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(EvenementRepositoryInterface::class, EvenementRepository::class);
         $this->app->bind(InscriptionRepositoryInterface::class, InscriptionRepository::class);
         $this->app->bind(CertificatRepositoryInterface::class, CertificatRepository::class);
+        $this->app->bind(ListeAttenteRepositoryInterface::class, ListeAttenteRepository::class);
     }
 
     public function boot(): void

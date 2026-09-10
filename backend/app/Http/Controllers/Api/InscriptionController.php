@@ -19,7 +19,7 @@ class InscriptionController extends Controller
         return InscriptionResource::collection($this->service->lister());
     }
 
-    public function store(Request $request)
+        public function store(Request $request)
     {
         $validated = $request->validate([
             'participant_id' => 'required|exists:participants,id',
@@ -27,9 +27,17 @@ class InscriptionController extends Controller
             'statut' => 'nullable|in:en_attente,confirmee,annulee',
         ]);
 
-        $inscription = $this->service->creer($validated);
+        $resultat = $this->service->creer($validated);
 
-        return (new InscriptionResource($inscription))
+        if (is_array($resultat) && ($resultat['liste_attente'] ?? false)) {
+            return response()->json([
+                'liste_attente' => true,
+                'position' => $resultat['position'],
+                'message' => "L'evenement est complet. Vous avez ete ajoute a la liste d'attente en position {$resultat['position']}.",
+            ], 200);
+        }
+
+        return (new InscriptionResource($resultat))
             ->response()
             ->setStatusCode(201);
     }
