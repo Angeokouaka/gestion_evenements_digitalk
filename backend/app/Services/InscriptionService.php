@@ -79,67 +79,33 @@ class InscriptionService
             abort(404, "Aucune inscription trouvee pour cet email sur cet evenement.");
         }
 
+        if ($inscription->presence_arrivee) {
+            abort(422, 'Presence deja confirmee.');
+        }
+
         $debut = Carbon::parse($evenement->date_debut);
-        $finFenetreArrivee = $debut->copy()->addMinutes($evenement->duree_fenetre_scan_debut);
-
         $fin = Carbon::parse($evenement->date_fin);
-        $finFenetreDepart = $fin->copy()->addMinutes($evenement->duree_fenetre_scan_fin);
 
-        $maintenant = now();
-
-        if ($maintenant->between($debut, $finFenetreArrivee)) {
-            if ($inscription->presence_arrivee) {
-                abort(422, "Presence d'arrivee deja confirmee.");
-            }
-            return $this->confirmerPresenceArrivee($inscription);
+        if (!now()->between($debut, $fin)) {
+            abort(422, 'Scan indisponible pour le moment.');
         }
 
-        if ($maintenant->between($fin, $finFenetreDepart)) {
-            if (!$inscription->presence_arrivee) {
-                abort(422, "Vous devez d'abord confirmer votre arrivee.");
-            }
-            if ($inscription->presence_depart) {
-                abort(422, 'Presence de depart deja confirmee.');
-            }
-            return $this->confirmerPresenceDepart($inscription);
-        }
-
-        abort(422, 'Scan indisponible pour le moment.');
+        return $this->confirmerPresenceArrivee($inscription);
     }
 
     public function confirmerPresenceArrivee(Inscription $inscription): Inscription
     {
         $evenement = $inscription->evenement;
         $debut = Carbon::parse($evenement->date_debut);
-        $finFenetre = $debut->copy()->addMinutes($evenement->duree_fenetre_scan_debut);
+        $fin = Carbon::parse($evenement->date_fin);
 
-        if (!now()->between($debut, $finFenetre)) {
+        if (!now()->between($debut, $fin)) {
             abort(422, 'Scan indisponible pour le moment.');
         }
 
         $inscription = $this->repository->update($inscription, [
             'presence_arrivee' => true,
             'date_presence_arrivee' => now(),
-        ]);
-
-        $this->certificatService->genererSiEligible($inscription);
-
-        return $inscription;
-    }
-
-    public function confirmerPresenceDepart(Inscription $inscription): Inscription
-    {
-        $evenement = $inscription->evenement;
-        $fin = Carbon::parse($evenement->date_fin);
-        $finFenetre = $fin->copy()->addMinutes($evenement->duree_fenetre_scan_fin);
-
-        if (!now()->between($fin, $finFenetre)) {
-            abort(422, 'Scan indisponible pour le moment.');
-        }
-
-        $inscription = $this->repository->update($inscription, [
-            'presence_depart' => true,
-            'date_presence_depart' => now(),
         ]);
 
         $this->certificatService->genererSiEligible($inscription);

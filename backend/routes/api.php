@@ -40,7 +40,6 @@ Route::post('participants', [ParticipantController::class, 'store']);
 // Inscriptions : libres (un participant s'inscrit sans compte)
 Route::apiResource('inscriptions', InscriptionController::class);
 Route::post('inscriptions/{inscription}/scanner-arrivee', [InscriptionController::class, 'scannerArrivee']);
-Route::post('inscriptions/{inscription}/scanner-depart', [InscriptionController::class, 'scannerDepart']);
 Route::post('scan/{qrCode}', [InscriptionController::class, 'scannerParEmail']);
 
 // Routes protegees (ecriture - necessite d'etre connecte en tant qu'Organisateur)

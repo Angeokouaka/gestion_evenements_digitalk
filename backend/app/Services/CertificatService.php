@@ -17,7 +17,7 @@ class CertificatService
 
     public function genererSiEligible(Inscription $inscription): ?Certificat
     {
-        if (!$inscription->presence_arrivee || !$inscription->presence_depart) {
+        if (!$inscription->presence_arrivee) {
             return null;
         }
 
@@ -43,7 +43,7 @@ class CertificatService
 
     protected function genererFichierPdf(Inscription $inscription, Certificat $certificat): string
     {
-        $pdf = PDF::loadView('certificats.attestation', [
+        $pdf = Pdf::loadView('certificats.attestation', [
             'participant' => $inscription->participant,
             'evenement' => $inscription->evenement,
             'certificat' => $certificat,
@@ -57,9 +57,9 @@ class CertificatService
         return $cheminRelatif;
     }
 
-   protected function envoyerParMail(Inscription $inscription, Certificat $certificat): void
-{
-    \Illuminate\Support\Facades\Mail::to($inscription->participant->email)
-        ->send(new \App\Mail\CertificatMail($certificat));
-}
+    protected function envoyerParMail(Inscription $inscription, Certificat $certificat): void
+    {
+        \Illuminate\Support\Facades\Mail::to($inscription->participant->email)
+            ->send(new \App\Mail\CertificatMail($certificat));
+    }
 }
