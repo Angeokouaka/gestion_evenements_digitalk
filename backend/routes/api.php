@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\IntervenantController;
 use App\Http\Controllers\Api\ParticipantController;
 use App\Http\Controllers\Api\EvenementController;
 use App\Http\Controllers\Api\InscriptionController;
+use App\Http\Controllers\Api\DashboardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -37,7 +38,6 @@ Route::get('evenements/{evenement}', [EvenementController::class, 'show']);
 Route::post('participants', [ParticipantController::class, 'store']);
 
 // Inscriptions : libres (un participant s'inscrit sans compte)
-// Inscriptions : libres (un participant s'inscrit sans compte)
 Route::apiResource('inscriptions', InscriptionController::class);
 Route::post('inscriptions/{inscription}/scanner-arrivee', [InscriptionController::class, 'scannerArrivee']);
 Route::post('scan/{qrCode}', [InscriptionController::class, 'scannerParEmail']);
@@ -62,4 +62,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('evenements/{evenement}/intervenants', [EvenementController::class, 'attachIntervenant']);
     Route::delete('evenements/{evenement}/intervenants/{intervenant}', [EvenementController::class, 'detachIntervenant']);
+
+    Route::get('dashboard', [DashboardController::class, 'index']);
 });
