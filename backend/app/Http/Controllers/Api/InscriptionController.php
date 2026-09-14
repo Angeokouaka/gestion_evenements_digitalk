@@ -19,7 +19,7 @@ class InscriptionController extends Controller
         return InscriptionResource::collection($this->service->lister());
     }
 
-        public function store(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'participant_id' => 'required|exists:participants,id',
@@ -68,5 +68,14 @@ class InscriptionController extends Controller
         return new InscriptionResource($inscription);
     }
 
-    
+    public function scannerParEmail(Request $request, string $qrCode)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $inscription = $this->service->confirmerParEmail($qrCode, $validated['email']);
+
+        return new InscriptionResource($inscription);
+    }
 }
