@@ -6,6 +6,7 @@ import EditEvenementView from '../views/EditEvenementView.vue'
 import LoginView from '../views/LoginView.vue'
 import CreateEvenementView from '../views/CreateEvenementView.vue'
 import ProfilView from '../views/ProfilView.vue'
+import ScanView from '../views/ScanView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +45,11 @@ const router = createRouter({
       path: '/profil',
       name: 'profil',
       component: ProfilView,
+    },
+    {
+      path: '/scan/:qrCode',
+      name: 'scan',
+      component: ScanView,
     },
   ],
 })

@@ -25,7 +25,7 @@ export default {
     return api.post(`/inscriptions/${id}/scanner-arrivee`)
   },
 
-  scannerDepart(id) {
-    return api.post(`/inscriptions/${id}/scanner-depart`)
+  scannerParEmail(qrCode, email) {
+    return api.post(`/scan/${qrCode}`, { email })
   },
 }
