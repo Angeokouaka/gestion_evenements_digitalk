@@ -28,4 +28,8 @@ export default {
   scannerParEmail(qrCode, email) {
     return api.post(`/scan/${qrCode}`, { email })
   },
+
+  parEvenement(evenementId) {
+    return api.get(`/evenements/${evenementId}/inscriptions`)
+  },
 }

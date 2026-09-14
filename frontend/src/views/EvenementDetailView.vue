@@ -26,22 +26,45 @@ const inscriptionMessage = ref(null)
 const inscriptionError = ref(null)
 const inscriptionLoading = ref(false)
 
+const inscriptions = ref([])
+const inscriptionsLoading = ref(false)
+
 const estProprietaire = computed(() => {
   return authStore.isAuthenticated &&
     evenement.value &&
     authStore.organisateur?.id === evenement.value.organisateur?.id
 })
 
+const nombrePresents = computed(() => {
+  return inscriptions.value.filter((i) => i.presence_arrivee).length
+})
+
 async function chargerEvenement() {
   loading.value = true
   try {
-        const response = await evenementService.detail(route.params.id)
+    const response = await evenementService.detail(route.params.id)
     evenement.value = response.data.data
+
+    if (estProprietaire.value) {
+      chargerInscriptions()
+    }
   } catch (err) {
     error.value = "Evenement introuvable."
     console.error(err)
   } finally {
     loading.value = false
+  }
+}
+
+async function chargerInscriptions() {
+  inscriptionsLoading.value = true
+  try {
+    const response = await inscriptionService.parEvenement(route.params.id)
+    inscriptions.value = response.data.data
+  } catch (err) {
+    console.error(err)
+  } finally {
+    inscriptionsLoading.value = false
   }
 }
 
@@ -54,7 +77,7 @@ async function handleSupprimer() {
 
   suppressionLoading.value = true
   try {
-        await evenementService.supprimer(evenement.value.id)
+    await evenementService.supprimer(evenement.value.id)
     router.push('/evenements')
   } catch (err) {
     error.value = "Erreur lors de la suppression."
@@ -95,7 +118,7 @@ async function handleInscription() {
   inscriptionLoading.value = true
 
   try {
-       const participantResponse = await participantService.creer( {
+    const participantResponse = await participantService.creer({
       nom: nom.value,
       prenom: prenom.value,
       email: email.value,
@@ -103,7 +126,7 @@ async function handleInscription() {
       matricule: matricule.value || null,
     })
 
-       await inscriptionService.creer({
+    await inscriptionService.creer({
       participant_id: participantResponse.data.data.id,
       evenement_id: evenement.value.id,
     })
@@ -190,6 +213,59 @@ async function handleInscription() {
             </span>
           </div>
         </div>
+      </div>
+
+      <div v-if="estProprietaire" class="border border-gray-200 rounded-lg p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-800">Liste de presence</h2>
+          <span class="text-sm text-gray-500">
+            {{ nombrePresents }} present(s) / {{ inscriptions.length }} inscrit(s)
+          </span>
+        </div>
+
+        <p v-if="inscriptionsLoading" class="text-sm text-gray-500">Chargement...</p>
+        <p v-else-if="inscriptions.length === 0" class="text-sm text-gray-400 italic">
+          Aucune inscription pour le moment.
+        </p>
+
+        <table v-else class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-gray-500 border-b border-gray-200">
+              <th class="pb-2">Participant</th>
+              <th class="pb-2">Email</th>
+              <th class="pb-2">Presence</th>
+              <th class="pb-2">Heure d'arrivee</th>
+              <th class="pb-2">Certificat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="inscription in inscriptions"
+              :key="inscription.id"
+              class="border-b border-gray-100"
+            >
+              <td class="py-2">{{ inscription.participant?.prenom }} {{ inscription.participant?.nom }}</td>
+              <td class="py-2 text-gray-500">{{ inscription.participant?.email }}</td>
+              <td class="py-2">
+                <span v-if="inscription.presence_arrivee" class="text-green-700 bg-green-50 px-2 py-1 rounded text-xs">
+                  Present
+                </span>
+                <span v-else class="text-gray-400 bg-gray-50 px-2 py-1 rounded text-xs">
+                  En attente
+                </span>
+              </td>
+              <td class="py-2 text-gray-500">
+                {{ inscription.date_presence_arrivee
+                  ? new Date(inscription.date_presence_arrivee).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                  : '-' }}
+              </td>
+              <td class="py-2">
+                <span v-if="inscription.presence_arrivee" class="text-green-600 text-xs">Envoye</span>
+                <span v-else class="text-gray-400 text-xs">-</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div class="border border-gray-200 rounded-lg p-6">
