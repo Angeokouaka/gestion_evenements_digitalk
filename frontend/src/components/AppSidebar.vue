@@ -28,6 +28,13 @@ async function handleLogout() {
 
     <nav class="flex-1 p-4 space-y-1">
       <RouterLink
+        to="/dashboard"
+        class="block px-3 py-2 rounded hover:bg-blue-900 hover:text-white"
+        active-class="bg-blue-900 text-white"
+      >
+        Tableau de bord
+      </RouterLink>
+      <RouterLink
         to="/evenements"
         class="block px-3 py-2 rounded hover:bg-blue-900 hover:text-white"
         active-class="bg-blue-900 text-white"
