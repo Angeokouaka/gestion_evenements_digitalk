@@ -78,4 +78,9 @@ class InscriptionController extends Controller
 
         return new InscriptionResource($inscription);
     }
+
+    public function parEvenement(int $evenementId)
+    {
+        return InscriptionResource::collection($this->service->listerParEvenement($evenementId));
+    }
 }

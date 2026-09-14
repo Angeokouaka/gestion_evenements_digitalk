@@ -65,6 +65,11 @@ class InscriptionService
         return $this->repository->delete($inscription);
     }
 
+    public function listerParEvenement(int $evenementId): Collection
+    {
+        return $this->repository->listeParEvenement($evenementId);
+    }
+
     public function confirmerParEmail(string $qrCodeEvenement, string $email): Inscription
     {
         $evenement = $this->evenementRepository->findByQrCode($qrCodeEvenement);

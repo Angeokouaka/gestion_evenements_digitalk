@@ -38,20 +38,30 @@ class InscriptionRepository implements InscriptionRepositoryInterface
     {
         return $inscription->delete();
     }
-    public function findByEmailAndEvenement(string $email, int $evenementId): ?Inscription
-{
-    $participant = Participant::where('email', $email)->first();
 
-    if (!$participant) {
-        return null;
+    public function findByEmailAndEvenement(string $email, int $evenementId): ?Inscription
+    {
+        $participant = Participant::where('email', $email)->first();
+
+        if (!$participant) {
+            return null;
+        }
+
+        return Inscription::where('participant_id', $participant->id)
+            ->where('evenement_id', $evenementId)
+            ->first();
     }
 
-    return Inscription::where('participant_id', $participant->id)
-        ->where('evenement_id', $evenementId)
-        ->first();
-}
-public function countByEvenement(int $evenementId): int
-{
-    return Inscription::where('evenement_id', $evenementId)->count();
-}
+    public function countByEvenement(int $evenementId): int
+    {
+        return Inscription::where('evenement_id', $evenementId)->count();
+    }
+
+    public function listeParEvenement(int $evenementId): Collection
+    {
+        return Inscription::where('evenement_id', $evenementId)
+            ->with('participant')
+            ->orderBy('date_presence_arrivee', 'desc')
+            ->get();
+    }
 }

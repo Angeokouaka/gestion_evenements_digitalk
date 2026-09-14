@@ -64,4 +64,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('evenements/{evenement}/intervenants/{intervenant}', [EvenementController::class, 'detachIntervenant']);
 
     Route::get('dashboard', [DashboardController::class, 'index']);
+    Route::get('evenements/{evenement}/inscriptions', [InscriptionController::class, 'parEvenement']);
 });

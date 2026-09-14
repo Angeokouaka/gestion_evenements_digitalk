@@ -18,6 +18,8 @@ interface InscriptionRepositoryInterface
     public function delete(Inscription $inscription): bool;
 
     public function findByEmailAndEvenement(string $email, int $evenementId): ?Inscription;
+
     public function countByEvenement(int $evenementId): int;
 
+    public function listeParEvenement(int $evenementId): Collection;
 }
