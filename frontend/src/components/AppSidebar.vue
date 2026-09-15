@@ -48,6 +48,13 @@ async function handleLogout() {
       >
         Creer un evenement
       </RouterLink>
+      <RouterLink
+        to="/intervenants"
+        class="block px-3 py-2 rounded hover:bg-blue-900 hover:text-white"
+        active-class="bg-blue-900 text-white"
+      >
+        Intervenants
+      </RouterLink>
     </nav>
 
     <div class="relative p-3 border-t border-blue-900">

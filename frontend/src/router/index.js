@@ -8,6 +8,7 @@ import CreateEvenementView from '../views/CreateEvenementView.vue'
 import ProfilView from '../views/ProfilView.vue'
 import ScanView from '../views/ScanView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import IntervenantsView from '../views/IntervenantsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -56,6 +57,11 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
+    },
+    {
+      path: '/intervenants',
+      name: 'intervenants',
+      component: IntervenantsView,
     },
   ],
 })
