@@ -9,10 +9,11 @@ class Intervenant extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nom', 'prenom', 'email', 'specialite', 'bio'];
+    protected $fillable = ['nom', 'prenom', 'email', 'specialite', 'bio', 'photo'];
 
     public function evenements()
     {
-        return $this->belongsToMany(Evenement::class, 'evenement_intervenant');
+        return $this->belongsToMany(Evenement::class, 'evenement_intervenant')
+                     ->withPivot('role');
     }
 }

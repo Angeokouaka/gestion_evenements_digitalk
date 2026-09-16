@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class EvenementResource extends JsonResource
 {
@@ -17,9 +18,11 @@ class EvenementResource extends JsonResource
             'date_fin' => $this->date_fin,
             'lieu' => $this->lieu,
             'lien_visio' => $this->lien_visio,
+            'affiche_url' => $this->affiche ? Storage::disk('public')->url($this->affiche) : null,
             'filiere' => $this->filiere,
             'capacite_max' => $this->capacite_max,
             'statut' => $this->statut,
+            'qr_code' => $this->qr_code,
             'categorie' => new CategorieResource($this->whenLoaded('categorie')),
             'organisateur' => new OrganisateurResource($this->whenLoaded('organisateur')),
             'intervenants' => IntervenantResource::collection($this->whenLoaded('intervenants')),

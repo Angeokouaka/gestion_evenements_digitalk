@@ -26,7 +26,7 @@ class EvenementService
         );
     }
 
-        public function creer(array $data): Evenement
+    public function creer(array $data): Evenement
     {
         $data['statut'] = $data['statut'] ?? 'planifie';
         $data['qr_code'] = (string) Str::uuid();
@@ -45,9 +45,9 @@ class EvenementService
         return $this->repository->delete($evenement);
     }
 
-    public function ajouterIntervenant(Evenement $evenement, int $intervenantId): Evenement
+    public function ajouterIntervenant(Evenement $evenement, int $intervenantId, string $role = 'Intervenant'): Evenement
     {
-        return $this->repository->attachIntervenant($evenement, $intervenantId);
+        return $this->repository->attachIntervenant($evenement, $intervenantId, $role);
     }
 
     public function retirerIntervenant(Evenement $evenement, int $intervenantId): Evenement

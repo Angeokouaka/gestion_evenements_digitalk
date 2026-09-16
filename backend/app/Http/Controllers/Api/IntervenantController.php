@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\IntervenantResource;
 use App\Models\Intervenant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class IntervenantController extends Controller
 {
@@ -22,7 +23,12 @@ class IntervenantController extends Controller
             'email' => 'nullable|email',
             'specialite' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
+            'photo' => 'nullable|image|max:5120',
         ]);
+
+        if ($request->hasFile('photo')) {
+            $validated['photo'] = $request->file('photo')->store('intervenants', 'public');
+        }
 
         return (new IntervenantResource(Intervenant::create($validated)))
             ->response()
@@ -42,7 +48,15 @@ class IntervenantController extends Controller
             'email' => 'nullable|email',
             'specialite' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
+            'photo' => 'nullable|image|max:5120',
         ]);
+
+        if ($request->hasFile('photo')) {
+            if ($intervenant->photo) {
+                Storage::disk('public')->delete($intervenant->photo);
+            }
+            $validated['photo'] = $request->file('photo')->store('intervenants', 'public');
+        }
 
         $intervenant->update($validated);
 

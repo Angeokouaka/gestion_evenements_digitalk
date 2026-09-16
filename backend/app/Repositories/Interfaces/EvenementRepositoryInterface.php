@@ -17,9 +17,9 @@ interface EvenementRepositoryInterface
 
     public function delete(Evenement $evenement): bool;
 
-    public function attachIntervenant(Evenement $evenement, int $intervenantId): Evenement;
+    public function attachIntervenant(Evenement $evenement, int $intervenantId, string $role = 'Intervenant'): Evenement;
 
     public function detachIntervenant(Evenement $evenement, int $intervenantId): Evenement;
-    
+
     public function findByQrCode(string $qrCode): ?Evenement;
 }

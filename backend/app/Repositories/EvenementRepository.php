@@ -44,9 +44,11 @@ class EvenementRepository implements EvenementRepositoryInterface
         return $evenement->delete();
     }
 
-    public function attachIntervenant(Evenement $evenement, int $intervenantId): Evenement
+    public function attachIntervenant(Evenement $evenement, int $intervenantId, string $role = 'Intervenant'): Evenement
     {
-        $evenement->intervenants()->syncWithoutDetaching($intervenantId);
+        $evenement->intervenants()->syncWithoutDetaching([
+            $intervenantId => ['role' => $role],
+        ]);
         return $evenement->load('intervenants');
     }
 
@@ -55,8 +57,9 @@ class EvenementRepository implements EvenementRepositoryInterface
         $evenement->intervenants()->detach($intervenantId);
         return $evenement->load('intervenants');
     }
+
     public function findByQrCode(string $qrCode): ?Evenement
-{
-    return Evenement::where('qr_code', $qrCode)->first();
-}
+    {
+        return Evenement::where('qr_code', $qrCode)->first();
+    }
 }

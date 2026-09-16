@@ -7,11 +7,13 @@ use App\Models\Evenement;
 use App\Http\Resources\EvenementResource;
 use App\Services\EvenementService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Intervenant;
 
 class EvenementController extends Controller
 {
     const FILIERES = ['ESITEC', 'IST', 'PGE', 'IMAP', 'MERCURE', 'ECONOMIE', 'BBA', 'LEA', 'SCHOOL OF LAW'];
+    const ROLES_INTERVENTION = ['Intervenant', 'Moderateur', 'Animateur'];
 
     public function __construct(
         protected EvenementService $service
@@ -33,12 +35,17 @@ class EvenementController extends Controller
             'date_fin' => 'required|date|after:date_debut',
             'lieu' => 'nullable|string|max:255',
             'lien_visio' => 'nullable|url|max:255',
+            'affiche' => 'nullable|image|max:5120',
             'filiere' => 'nullable|in:' . implode(',', self::FILIERES),
             'capacite_max' => 'nullable|integer|min:1',
             'statut' => 'nullable|in:planifie,en_cours,termine,annule',
             'categorie_id' => 'required|exists:categories,id',
             'organisateur_id' => 'required|exists:organisateurs,id',
         ]);
+
+        if ($request->hasFile('affiche')) {
+            $validated['affiche'] = $request->file('affiche')->store('affiches', 'public');
+        }
 
         $evenement = $this->service->creer($validated);
 
@@ -62,12 +69,20 @@ class EvenementController extends Controller
             'date_fin' => 'sometimes|required|date|after:date_debut',
             'lieu' => 'nullable|string|max:255',
             'lien_visio' => 'nullable|url|max:255',
+            'affiche' => 'nullable|image|max:5120',
             'filiere' => 'nullable|in:' . implode(',', self::FILIERES),
             'capacite_max' => 'nullable|integer|min:1',
             'statut' => 'nullable|in:planifie,en_cours,termine,annule',
             'categorie_id' => 'sometimes|required|exists:categories,id',
             'organisateur_id' => 'sometimes|required|exists:organisateurs,id',
         ]);
+
+        if ($request->hasFile('affiche')) {
+            if ($evenement->affiche) {
+                Storage::disk('public')->delete($evenement->affiche);
+            }
+            $validated['affiche'] = $request->file('affiche')->store('affiches', 'public');
+        }
 
         $evenement = $this->service->modifier($request->user()->id, $evenement, $validated);
 
@@ -84,9 +99,14 @@ class EvenementController extends Controller
     {
         $validated = $request->validate([
             'intervenant_id' => 'required|exists:intervenants,id',
+            'role' => 'nullable|in:' . implode(',', self::ROLES_INTERVENTION),
         ]);
 
-        $evenement = $this->service->ajouterIntervenant($evenement, $validated['intervenant_id']);
+        $evenement = $this->service->ajouterIntervenant(
+            $evenement,
+            $validated['intervenant_id'],
+            $validated['role'] ?? 'Intervenant'
+        );
 
         return response()->json($evenement);
     }

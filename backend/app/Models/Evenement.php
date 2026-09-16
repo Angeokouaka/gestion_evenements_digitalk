@@ -12,7 +12,7 @@ class Evenement extends Model
 
     protected $fillable = [
         'titre', 'description', 'date_debut', 'date_fin',
-        'lieu', 'lien_visio', 'filiere', 'capacite_max', 'statut', 'categorie_id', 'organisateur_id',
+        'lieu', 'lien_visio', 'affiche', 'filiere', 'capacite_max', 'statut', 'categorie_id', 'organisateur_id',
         'qr_code', 'duree_fenetre_scan_debut', 'duree_fenetre_scan_fin',
         'rappel_actif', 'delai_rappel_heures',
     ];
@@ -46,7 +46,8 @@ class Evenement extends Model
 
     public function intervenants()
     {
-        return $this->belongsToMany(Intervenant::class, 'evenement_intervenant');
+        return $this->belongsToMany(Intervenant::class, 'evenement_intervenant')
+                     ->withPivot('role');
     }
 
     public function inscriptions()
