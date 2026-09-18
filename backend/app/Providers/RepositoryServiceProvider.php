@@ -13,6 +13,8 @@ use App\Repositories\Interfaces\ListeAttenteRepositoryInterface;
 use App\Repositories\ListeAttenteRepository;
 use App\Repositories\Interfaces\DashboardRepositoryInterface;
 use App\Repositories\DashboardRepository;
+use App\Repositories\Interfaces\AvisRepositoryInterface;
+use App\Repositories\AvisRepository;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -23,6 +25,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(CertificatRepositoryInterface::class, CertificatRepository::class);
         $this->app->bind(ListeAttenteRepositoryInterface::class, ListeAttenteRepository::class);
         $this->app->bind(DashboardRepositoryInterface::class, DashboardRepository::class);
+        $this->app->bind(AvisRepositoryInterface::class, AvisRepository::class);
     }
 
     public function boot(): void

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ParticipantController;
 use App\Http\Controllers\Api\EvenementController;
 use App\Http\Controllers\Api\InscriptionController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\AvisController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +42,10 @@ Route::post('participants', [ParticipantController::class, 'store']);
 Route::apiResource('inscriptions', InscriptionController::class);
 Route::post('inscriptions/{inscription}/scanner-arrivee', [InscriptionController::class, 'scannerArrivee']);
 Route::post('scan/{qrCode}', [InscriptionController::class, 'scannerParEmail']);
+
+// Avis / notes : libres (reserve aux participants ayant confirme leur presence, verifie cote service)
+Route::post('evenements/{evenement}/avis', [AvisController::class, 'noterEvenement']);
+Route::post('intervenants/{intervenant}/avis', [AvisController::class, 'noterIntervenant']);
 
 // Routes protegees (ecriture - necessite d'etre connecte en tant qu'Organisateur)
 Route::middleware('auth:sanctum')->group(function () {
