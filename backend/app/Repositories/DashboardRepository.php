@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Evenement;
 use App\Models\Inscription;
+use App\Models\Intervenant;
 use App\Repositories\Interfaces\DashboardRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -57,5 +58,33 @@ class DashboardRepository implements DashboardRepositoryInterface
             ->orderBy('date_debut', 'desc')
             ->limit(10)
             ->get(['id', 'titre', 'date_debut', 'capacite_max']);
+    }
+
+    public function evenementsLesPlusPopulaires(int $organisateurId, int $limite = 5): Collection
+    {
+        return Evenement::where('organisateur_id', $organisateurId)
+            ->withCount('inscriptions')
+            ->withAvg('avisEvenements', 'note')
+            ->orderByDesc('inscriptions_count')
+            ->limit($limite)
+            ->get(['id', 'titre', 'date_debut', 'capacite_max']);
+    }
+
+    public function intervenantsLesPlusSollicites(int $limite = 5): Collection
+    {
+        return Intervenant::withCount('evenements')
+            ->orderByDesc('evenements_count')
+            ->limit($limite)
+            ->get(['id', 'nom', 'prenom', 'specialite']);
+    }
+
+    public function intervenantsLesMieuxNotes(int $limite = 5): Collection
+    {
+        return Intervenant::withAvg('avisIntervenants', 'note')
+            ->withCount('avisIntervenants')
+            ->having('avis_intervenants_count', '>', 0)
+            ->orderByDesc('avis_intervenants_avg_note')
+            ->limit($limite)
+            ->get(['id', 'nom', 'prenom', 'specialite']);
     }
 }

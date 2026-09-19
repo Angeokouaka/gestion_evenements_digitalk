@@ -61,4 +61,9 @@ class Evenement extends Model
                      ->withPivot('statut', 'date_inscription')
                      ->withTimestamps();
     }
+
+    public function avisEvenements()
+    {
+        return $this->hasMany(AvisEvenement::class);
+    }
 }

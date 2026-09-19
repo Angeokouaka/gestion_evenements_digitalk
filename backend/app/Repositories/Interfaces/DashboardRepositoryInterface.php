@@ -17,4 +17,10 @@ interface DashboardRepositoryInterface
     public function repartitionHeuresArrivee(int $organisateurId): Collection;
 
     public function tauxRemplissageParEvenement(int $organisateurId): Collection;
+
+    public function evenementsLesPlusPopulaires(int $organisateurId, int $limite = 5): Collection;
+
+    public function intervenantsLesPlusSollicites(int $limite = 5): Collection;
+
+    public function intervenantsLesMieuxNotes(int $limite = 5): Collection;
 }

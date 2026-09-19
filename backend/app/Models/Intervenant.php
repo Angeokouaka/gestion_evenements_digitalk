@@ -16,4 +16,9 @@ class Intervenant extends Model
         return $this->belongsToMany(Evenement::class, 'evenement_intervenant')
                      ->withPivot('role');
     }
+
+    public function avisIntervenants()
+    {
+        return $this->hasMany(AvisIntervenant::class);
+    }
 }

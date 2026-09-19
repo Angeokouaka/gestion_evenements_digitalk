@@ -30,6 +30,34 @@ class DashboardService
                         : null,
                 ];
             }),
+            'evenements_populaires' => $this->repository->evenementsLesPlusPopulaires($organisateurId)->map(function ($evenement) {
+                return [
+                    'id' => $evenement->id,
+                    'titre' => $evenement->titre,
+                    'date_debut' => $evenement->date_debut,
+                    'inscrits' => $evenement->inscriptions_count,
+                    'note_moyenne' => $evenement->avis_evenements_avg_note ? round($evenement->avis_evenements_avg_note, 1) : null,
+                ];
+            }),
+            'intervenants_sollicites' => $this->repository->intervenantsLesPlusSollicites()->map(function ($intervenant) {
+                return [
+                    'id' => $intervenant->id,
+                    'nom' => $intervenant->nom,
+                    'prenom' => $intervenant->prenom,
+                    'specialite' => $intervenant->specialite,
+                    'nombre_evenements' => $intervenant->evenements_count,
+                ];
+            }),
+            'intervenants_mieux_notes' => $this->repository->intervenantsLesMieuxNotes()->map(function ($intervenant) {
+                return [
+                    'id' => $intervenant->id,
+                    'nom' => $intervenant->nom,
+                    'prenom' => $intervenant->prenom,
+                    'specialite' => $intervenant->specialite,
+                    'note_moyenne' => round($intervenant->avis_intervenants_avg_note, 1),
+                    'nombre_avis' => $intervenant->avis_intervenants_count,
+                ];
+            }),
         ];
     }
 }
