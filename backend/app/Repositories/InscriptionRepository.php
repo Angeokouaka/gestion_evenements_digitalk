@@ -64,4 +64,11 @@ class InscriptionRepository implements InscriptionRepositoryInterface
             ->orderBy('date_presence_arrivee', 'desc')
             ->get();
     }
+
+    public function findByQrCode(string $qrCode): ?Inscription
+    {
+        return Inscription::where('qr_code', $qrCode)
+            ->with(['participant', 'evenement.intervenants'])
+            ->first();
+    }
 }

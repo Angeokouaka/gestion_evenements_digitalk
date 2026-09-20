@@ -6,11 +6,13 @@ use App\Models\AvisEvenement;
 use App\Models\AvisIntervenant;
 use App\Models\Inscription;
 use App\Repositories\Interfaces\AvisRepositoryInterface;
+use App\Repositories\Interfaces\InscriptionRepositoryInterface;
 
 class AvisService
 {
     public function __construct(
-        protected AvisRepositoryInterface $repository
+        protected AvisRepositoryInterface $repository,
+        protected InscriptionRepositoryInterface $inscriptionRepository
     ) {}
 
     public function noterEvenement(int $evenementId, string $email, int $note, ?string $commentaire): AvisEvenement
@@ -32,6 +34,46 @@ class AvisService
         return $this->repository->creerOuMettreAJourAvisIntervenant([
             'intervenant_id' => $intervenantId,
             'evenement_id' => $evenementId,
+            'participant_id' => $inscription->participant_id,
+            'note' => $note,
+            'commentaire' => $commentaire,
+        ]);
+    }
+
+    public function inscriptionParQrCode(string $qrCode): Inscription
+    {
+        $inscription = $this->inscriptionRepository->findByQrCode($qrCode);
+
+        if (!$inscription) {
+            abort(404, 'Lien invalide.');
+        }
+
+        if (!$inscription->presence_arrivee) {
+            abort(403, "Seuls les participants ayant confirme leur presence peuvent noter.");
+        }
+
+        return $inscription;
+    }
+
+    public function noterEvenementParQrCode(string $qrCode, int $note, ?string $commentaire): AvisEvenement
+    {
+        $inscription = $this->inscriptionParQrCode($qrCode);
+
+        return $this->repository->creerOuMettreAJourAvisEvenement([
+            'evenement_id' => $inscription->evenement_id,
+            'participant_id' => $inscription->participant_id,
+            'note' => $note,
+            'commentaire' => $commentaire,
+        ]);
+    }
+
+    public function noterIntervenantParQrCode(string $qrCode, int $intervenantId, int $note, ?string $commentaire): AvisIntervenant
+    {
+        $inscription = $this->inscriptionParQrCode($qrCode);
+
+        return $this->repository->creerOuMettreAJourAvisIntervenant([
+            'intervenant_id' => $intervenantId,
+            'evenement_id' => $inscription->evenement_id,
             'participant_id' => $inscription->participant_id,
             'note' => $note,
             'commentaire' => $commentaire,

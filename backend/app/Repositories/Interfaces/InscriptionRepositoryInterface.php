@@ -22,4 +22,6 @@ interface InscriptionRepositoryInterface
     public function countByEvenement(int $evenementId): int;
 
     public function listeParEvenement(int $evenementId): Collection;
+
+    public function findByQrCode(string $qrCode): ?Inscription;
 }

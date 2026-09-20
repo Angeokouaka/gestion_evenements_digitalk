@@ -46,6 +46,13 @@ Route::post('scan/{qrCode}', [InscriptionController::class, 'scannerParEmail']);
 // Avis / notes : libres (reserve aux participants ayant confirme leur presence, verifie cote service)
 Route::post('evenements/{evenement}/avis', [AvisController::class, 'noterEvenement']);
 Route::post('intervenants/{intervenant}/avis', [AvisController::class, 'noterIntervenant']);
+Route::get('evenements/{evenement}/avis', [AvisController::class, 'avisEvenement']);
+Route::get('intervenants/{intervenant}/avis', [AvisController::class, 'avisIntervenant']);
+
+// Notation via le lien personnel envoye par email apres l'evenement
+Route::get('noter/{qrCode}', [AvisController::class, 'pageNotation']);
+Route::post('noter/{qrCode}/evenement', [AvisController::class, 'noterEvenementParQrCode']);
+Route::post('noter/{qrCode}/intervenants/{intervenantId}', [AvisController::class, 'noterIntervenantParQrCode']);
 
 // Routes protegees (ecriture - necessite d'etre connecte en tant qu'Organisateur)
 Route::middleware('auth:sanctum')->group(function () {

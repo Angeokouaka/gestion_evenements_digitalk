@@ -21,6 +21,8 @@ class Inscription extends Model
         'date_presence_depart',
         'rappel_envoye',
         'date_rappel_envoye',
+        'avis_envoye',
+        'date_avis_envoye',
     ];
 
     protected $casts = [
@@ -31,6 +33,8 @@ class Inscription extends Model
         'date_presence_depart' => 'datetime',
         'rappel_envoye' => 'boolean',
         'date_rappel_envoye' => 'datetime',
+        'avis_envoye' => 'boolean',
+        'date_avis_envoye' => 'datetime',
     ];
 
     public function participant()
