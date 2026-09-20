@@ -14,8 +14,13 @@ const CAPACITE_MAX_LIMITE = 1200
 const HEURE_LIMITE = '20:00'
 const DRAFT_KEY = 'digitalk_draft_evenement'
 const FILIERES = ['ESITEC', 'IST', 'PGE', 'IMAP', 'MERCURE', 'ECONOMIE', 'BBA', 'LEA', 'SCHOOL OF LAW']
+const ROLES_INTERVENTION = ['Intervenant', 'Moderateur', 'Animateur']
 
 const categories = ref([])
+const intervenantsExistants = ref([])
+const intervenantExistantId = ref('')
+const roleIntervenantExistant = ref('Intervenant')
+const intervenantsExistantsSelectionnes = ref([])
 const intervenantsSaisis = ref([])
 const titre = ref('')
 const description = ref('')
@@ -35,15 +40,27 @@ const error = ref(null)
 const draftMessage = ref(null)
 const loading = ref(false)
 
+const affiche = ref(null)
+const affichePreview = ref(null)
+
 const categorieSelectionnee = computed(() =>
   categories.value.find((cat) => cat.id === categorieId.value)
 )
 
 const estEnLigne = computed(() => categorieSelectionnee.value?.en_ligne === true)
 
+const intervenantsExistantsDisponibles = computed(() => {
+  const idsDejaChoisis = intervenantsExistantsSelectionnes.value.map((i) => i.id)
+  return intervenantsExistants.value.filter((i) => !idsDejaChoisis.includes(i.id))
+})
+
 onMounted(async () => {
-   const response = await categorieService.liste()
-  categories.value = response.data.data
+  const [categoriesRes, intervenantsRes] = await Promise.all([
+    categorieService.liste(),
+    intervenantService.liste(),
+  ])
+  categories.value = categoriesRes.data.data
+  intervenantsExistants.value = intervenantsRes.data.data
 
   const draft = localStorage.getItem(DRAFT_KEY)
   if (draft) {
@@ -94,8 +111,40 @@ watch(estEnLigne, (nouvelleValeur) => {
   }
 })
 
+function handleAfficheChange(event) {
+  const fichier = event.target.files[0]
+  if (!fichier) return
+
+  affiche.value = fichier
+  affichePreview.value = URL.createObjectURL(fichier)
+}
+
+function retirerAffiche() {
+  affiche.value = null
+  affichePreview.value = null
+}
+
+function ajouterIntervenantExistant() {
+  if (!intervenantExistantId.value) return
+
+  const intervenant = intervenantsExistants.value.find((i) => i.id === intervenantExistantId.value)
+  if (!intervenant) return
+
+  intervenantsExistantsSelectionnes.value.push({
+    ...intervenant,
+    role: roleIntervenantExistant.value,
+  })
+
+  intervenantExistantId.value = ''
+  roleIntervenantExistant.value = 'Intervenant'
+}
+
+function retirerIntervenantExistant(index) {
+  intervenantsExistantsSelectionnes.value.splice(index, 1)
+}
+
 function ajouterIntervenant() {
-  intervenantsSaisis.value.push({ nom: '', prenom: '', poste: '' })
+  intervenantsSaisis.value.push({ nom: '', prenom: '', poste: '', role: 'Intervenant' })
 }
 
 function retirerIntervenant(index) {
@@ -153,13 +202,14 @@ async function handlePublier() {
   loading.value = true
 
   try {
-         const response = await evenementService.creer({
+    const response = await evenementService.creer({
       titre: titre.value,
       description: description.value,
       date_debut: `${dateDebut.value}T${heureDebut.value}`,
       date_fin: `${dateFin.value}T${heureFin.value}`,
       lieu: lieu.value,
       lien_visio: estEnLigne.value ? lienVisio.value : null,
+      affiche: affiche.value,
       filiere: filiere.value || null,
       capacite_max: capaciteMax.value || null,
       categorie_id: categorieId.value,
@@ -168,14 +218,18 @@ async function handlePublier() {
 
     const nouvelEvenementId = response.data.data.id
 
+    for (const intervenant of intervenantsExistantsSelectionnes.value) {
+      await evenementService.ajouterIntervenant(nouvelEvenementId, intervenant.id, intervenant.role)
+    }
+
     for (const intervenant of intervenantsValides) {
-           const intervenantResponse = await intervenantService.creer({
+      const intervenantResponse = await intervenantService.creer({
         nom: intervenant.nom,
         prenom: intervenant.prenom,
         specialite: intervenant.poste,
       })
 
-            await evenementService.ajouterIntervenant(nouvelEvenementId, intervenantResponse.data.data.id)
+      await evenementService.ajouterIntervenant(nouvelEvenementId, intervenantResponse.data.data.id, intervenant.role)
     }
 
     localStorage.removeItem(DRAFT_KEY)
@@ -209,6 +263,19 @@ async function handlePublier() {
           <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
           <textarea v-model="description" rows="3" required
             class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Affiche de l'evenement (optionnel)</label>
+          <div v-if="affichePreview" class="mb-2">
+            <img :src="affichePreview" class="w-full max-h-48 object-cover rounded border border-gray-200" />
+            <button type="button" @click="retirerAffiche" class="text-xs text-red-600 hover:underline mt-1">
+              Retirer l'affiche
+            </button>
+          </div>
+          <input type="file" accept="image/*" @change="handleAfficheChange"
+            class="w-full text-sm text-gray-600 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <p class="text-xs text-gray-400 mt-1">Si aucune affiche n'est fournie, une banniere par defaut sera utilisee.</p>
         </div>
 
         <div>
@@ -276,8 +343,44 @@ async function handlePublier() {
         </div>
 
         <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Ajouter un intervenant existant</label>
+
+          <div v-if="intervenantsExistantsSelectionnes.length > 0" class="flex flex-wrap gap-2 mb-3">
+            <span
+              v-for="(intervenant, index) in intervenantsExistantsSelectionnes"
+              :key="intervenant.id"
+              class="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded"
+            >
+              {{ intervenant.prenom }} {{ intervenant.nom }} ({{ intervenant.role }})
+              <button type="button" @click="retirerIntervenantExistant(index)"
+                class="text-red-500 hover:text-red-700 font-bold ml-1">
+                X
+              </button>
+            </span>
+          </div>
+
+          <div class="grid grid-cols-[2fr_1fr_auto] gap-2">
+            <select v-model="intervenantExistantId"
+              class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="" disabled>Choisir un intervenant</option>
+              <option v-for="i in intervenantsExistantsDisponibles" :key="i.id" :value="i.id">
+                {{ i.prenom }} {{ i.nom }}<span v-if="i.specialite"> - {{ i.specialite }}</span>
+              </option>
+            </select>
+            <select v-model="roleIntervenantExistant"
+              class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option v-for="r in ROLES_INTERVENTION" :key="r" :value="r">{{ r }}</option>
+            </select>
+            <button type="button" @click="ajouterIntervenantExistant"
+              class="text-sm px-3 py-1 border border-blue-600 text-blue-600 rounded hover:bg-blue-50">
+              Ajouter
+            </button>
+          </div>
+        </div>
+
+        <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="block text-sm font-medium text-gray-700">Intervenants (optionnel)</label>
+            <label class="block text-sm font-medium text-gray-700">Nouvel intervenant (optionnel)</label>
             <button type="button" @click="ajouterIntervenant"
               class="text-sm text-blue-600 hover:text-blue-800">
               + Ajouter
@@ -285,13 +388,13 @@ async function handlePublier() {
           </div>
 
           <div v-if="intervenantsSaisis.length === 0" class="text-sm text-gray-400 italic">
-            Aucun intervenant ajoute.
+            Aucun nouvel intervenant ajoute.
           </div>
 
           <div
             v-for="(intervenant, index) in intervenantsSaisis"
             :key="index"
-            class="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 mb-2 items-center"
+            class="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 mb-2 items-center"
           >
             <input v-model="intervenant.nom" type="text" placeholder="Nom"
               class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -299,6 +402,10 @@ async function handlePublier() {
               class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <input v-model="intervenant.poste" type="text" placeholder="Poste"
               class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <select v-model="intervenant.role"
+              class="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option v-for="r in ROLES_INTERVENTION" :key="r" :value="r">{{ r }}</option>
+            </select>
             <button type="button" @click="retirerIntervenant(index)"
               class="text-red-500 hover:text-red-700 px-2 font-bold">
               X

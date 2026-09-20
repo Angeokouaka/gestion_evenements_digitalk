@@ -9,6 +9,7 @@ import ProfilView from '../views/ProfilView.vue'
 import ScanView from '../views/ScanView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import IntervenantsView from '../views/IntervenantsView.vue'
+import NoterView from '../views/NoterView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -62,6 +63,11 @@ const router = createRouter({
       path: '/intervenants',
       name: 'intervenants',
       component: IntervenantsView,
+    },
+    {
+      path: '/noter/:qrCode',
+      name: 'noter',
+      component: NoterView,
     },
   ],
 })

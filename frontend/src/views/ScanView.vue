@@ -49,6 +49,9 @@ async function handleConfirmer() {
           Bienvenue {{ succes.participant }}, votre presence a
           <strong>{{ succes.evenement }}</strong> a bien ete enregistree.
         </p>
+        <p class="text-xs text-gray-400 mt-4">
+          Vous recevrez un email a la fin de l'evenement pour partager votre avis.
+        </p>
       </div>
 
       <form v-else @submit.prevent="handleConfirmer" class="space-y-4">

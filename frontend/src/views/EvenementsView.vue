@@ -81,7 +81,7 @@ async function chargerEvenements(page = 1) {
       params.filiere = filiereActive.value
     }
 
-        const response = await evenementService.liste(params)
+    const response = await evenementService.liste(params)
     evenements.value = response.data.data
     pageActuelle.value = response.data.meta.current_page
     dernierePage.value = response.data.meta.last_page
@@ -115,7 +115,15 @@ onMounted(() => chargerEvenements(1))
 
 <template>
   <div class="p-8">
-    <PageHeader title="Evenements" />
+    <div class="flex items-center justify-between mb-2">
+      <PageHeader title="Evenements" />
+      <RouterLink
+        to="/creer-evenement"
+        class="text-sm px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium whitespace-nowrap"
+      >
+        + Creer un evenement
+      </RouterLink>
+    </div>
 
     <div class="flex flex-wrap gap-3 mb-4">
       <select v-model="filiereActive" @change="changerFiliere"

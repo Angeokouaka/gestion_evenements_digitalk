@@ -45,6 +45,10 @@ const urlScan = computed(() => {
   return evenement.value?.qr_code ? `${window.location.origin}/scan/${evenement.value.qr_code}` : ''
 })
 
+const imageBanniere = computed(() => {
+  return evenement.value?.affiche_url || supdecoBanner
+})
+
 async function chargerEvenement() {
   loading.value = true
   try {
@@ -171,7 +175,7 @@ async function handleInscription() {
     <div v-else-if="evenement">
       <div
         class="relative h-56 bg-blue-950 bg-cover bg-center flex items-center justify-center text-center"
-        :style="{ backgroundImage: `url(${supdecoBanner})` }"
+        :style="{ backgroundImage: `url(${imageBanniere})` }"
       >
         <div class="absolute inset-0 bg-blue-950/60"></div>
         <div class="relative z-10 text-white px-6">
@@ -228,6 +232,7 @@ async function handleInscription() {
                 >
                   {{ intervenant.prenom }} {{ intervenant.nom }}
                   <span v-if="intervenant.specialite" class="text-gray-400">- {{ intervenant.specialite }}</span>
+                  <span v-if="intervenant.role" class="text-blue-400"> ({{ intervenant.role }})</span>
                 </span>
               </div>
             </div>
